@@ -8,8 +8,8 @@ using code = vision::code;
 brain  Brain;
 
 // VEXcode device constructors
-motor LeftDriveSmart = motor(PORT10, ratio18_1, false);
-motor RightDriveSmart = motor(PORT20, ratio18_1, true);
+motor LeftDriveSmart = motor(PORT10, ratio18_1, true);//false);
+motor RightDriveSmart = motor(PORT20, ratio18_1, false); // true);
 drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 1.016, 12.953999999999999, mm, 1);
 controller Controller1 = controller(primary);
 motor Motor1 = motor(PORT1, ratio18_1, false);
@@ -17,7 +17,7 @@ motor MotorGroup4MotorA = motor(PORT4, ratio18_1, false);
 motor MotorGroup4MotorB = motor(PORT7, ratio18_1, true);
 motor_group MotorGroup4 = motor_group(MotorGroup4MotorA, MotorGroup4MotorB);
 motor Catapult = motor(PORT8, ratio36_1, true);
-motor middledrivesmart = motor(PORT6, ratio18_1, true)
+motor RollerDrive = motor(PORT6, ratio18_1, true);
 // VEXcode generated functions
 // define variable for remote controller enable/disable
 bool RemoteControlCodeEnabled = true;
@@ -44,17 +44,26 @@ int rc_auto_loop_function_Controller1() {
       // right = Axis2
       int drivetrainLeftSideSpeed = Controller1.Axis3.position();
       int drivetrainRightSideSpeed = Controller1.Axis2.position();
-      int middledrivesmartSpeed = Controller1.ButtonUp.position();
+      //int RollerDrive = Controller1.ButtonUp.pressing();
     
-       
+      if (Controller1.ButtonDown.pressing()){
+      
+        RollerDrive.spin(reverse);
+        }
+      else if (Controller1.ButtonUp.pressing()){
+
+        RollerDrive.spin(forward);
+
+
+          }
       // check if the value is inside of the deadband range
-      if (drivetrainLeftSideSpeed < 5 && drivetrainLeftSideSpeed > -5) {
+       if (drivetrainLeftSideSpeed < 5 && drivetrainLeftSideSpeed > -5) {
         // check if the left motor has already been stopped
-        if (DrivetrainLNeedsToBeStopped_Controller1) {
-          // stop the left drive motor
-          LeftDriveSmart.stop();
-          // tell the code that the left motor has been stopped
-          DrivetrainLNeedsToBeStopped_Controller1 = false;
+         if (DrivetrainLNeedsToBeStopped_Controller1) {
+           // stop the left drive motor
+           LeftDriveSmart.stop();
+           // tell the code that the left motor has been stopped
+           DrivetrainLNeedsToBeStopped_Controller1 = false;
         }
       } else {
         // reset the toggle so that the deadband code knows to stop the left motor nexttime the input is in the deadband range
@@ -123,9 +132,11 @@ int rc_auto_loop_function_Controller1() {
     }
     // wait before repeating the process
     wait(20, msec);
+   return 0;
   }
-  return 0;
-}
+  
+  
+
 
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
