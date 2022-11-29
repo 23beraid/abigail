@@ -131,8 +131,7 @@ int rc_auto_loop_function_Controller1() {
       }
     }
     // wait before repeating the process
-    wait(20, msec);
-   return 0;
+  
   }
   
   
