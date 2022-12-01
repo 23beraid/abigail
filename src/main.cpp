@@ -83,7 +83,25 @@ void autonomous(void) {
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
-  Catapult.spin(reverse);
+  const int t = 1000;
+    wait(t, msec);
+    RightDriveSmart.spin(forward);
+    LeftDriveSmart.spin(reverse);
+    wait(2000, msec);
+    RightDriveSmart.stop();
+    LeftDriveSmart.stop();
+    Catapult.spin(reverse);
+    wait(2000, msec);
+    Catapult.stop();
+    LeftDriveSmart.spin(forward);
+    RightDriveSmart.spin(reverse);
+    wait(2000, msec);
+    LeftDriveSmart.stop();
+    RightDriveSmart.stop();
+    Catapult.spin(forward);
+    wait(4000, msec);
+    Catapult.stop();
+    wait(3*t, msec);
 }
 
 /*---------------------------------------------------------------------------*/
