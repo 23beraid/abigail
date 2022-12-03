@@ -1,4 +1,5 @@
-/*----------------------------------------------------------------------------*/
+  
+  /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
 /*    Author:       VEX                                                       */
@@ -15,30 +16,33 @@
 using namespace vex;
 using signature = vision::signature;
 using code = vision::code;
+#include "vex.h"
+
+using namespace vex;
+using signature = vision::signature;
+using code = vision::code;
 
 // A global instance of brain used for printing to the V5 Brain screen
 brain  Brain;
 
 // VEXcode device constructors
-motor LeftDriveSmart = motor(PORT10, ratio18_1, false);//false);
-motor RightDriveSmart = motor(PORT20, ratio18_1, true); // true);
-drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 1.016, 12.953999999999999, mm, 1);
+motor LeftDriveSmart = motor(PORT10, ratio18_1, true);
+motor RightDriveSmart = motor(PORT20, ratio18_1, false);
+drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 381, 241.29999999999998, mm, 1);
 controller Controller1 = controller(primary);
-motor Motor1 = motor(PORT1, ratio18_1, false);
-motor MotorGroup4MotorA = motor(PORT4, ratio18_1, false);
-motor MotorGroup4MotorB = motor(PORT7, ratio18_1, true);
-motor_group MotorGroup4 = motor_group(MotorGroup4MotorA, MotorGroup4MotorB);
-motor Catapult = motor(PORT8, ratio36_1, true);
-motor RollerDrive = motor(PORT6, ratio18_1, true);
+motor Catapult = motor(PORT8, ratio36_1, false);
+motor Lift = motor(PORT5, ratio36_1, false);
+motor Motor6 = motor(PORT6, ratio18_1, false);
+
 // VEXcode generated functions
 // define variable for remote controller enable/disable
 bool RemoteControlCodeEnabled = true;
 // define variables used for controlling motors based on controller inputs
 bool Controller1LeftShoulderControlMotorsStopped = true;
 bool Controller1RightShoulderControlMotorsStopped = true;
+bool Controller1UpDownButtonsControlMotorsStopped = true;
 bool DrivetrainLNeedsToBeStopped_Controller1 = true;
 bool DrivetrainRNeedsToBeStopped_Controller1 = true;
-bool stopCatapult = true;
 
 // define a task that will handle monitoring inputs from Controller1
 
@@ -49,104 +53,26 @@ using namespace vex;
 // A global instance of competition
 competition Competition;
 
-// define your global instances of motors and other devices here
-
-/*---------------------------------------------------------------------------*/
-/*                          Pre-Autonomous Functions                         */
-/*                                                                           */
-/*  You may want to perform some actions before the competition starts.      */
-/*  Do them in the following function.  You must return from this function   */
-/*  or the autonomous and usercontrol tasks will not be started.  This       */
-/*  function is only called once after the V5 has been powered on and        */
-/*  not every time that the robot is disabled.                               */
-/*---------------------------------------------------------------------------*/
-
-void pre_auton(void) {
-  // Initializing Robot Configuration. DO NOT REMOVE!
-  vexcodeInit();
-  
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
-}
-
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              Autonomous Task                              */
-/*                                                                           */
-/*  This task is used to control your robot during the autonomous phase of   */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
-
-void autonomous(void) {
-  // ..........................................................................
-  // Insert autonomous user code here.
-  // ..........................................................................
-  const int t = 1000;
-    wait(t, msec);
-    RightDriveSmart.spin(forward);
-    LeftDriveSmart.spin(reverse);
-    wait(2000, msec);
-    RightDriveSmart.stop();
-    LeftDriveSmart.stop();
-    Catapult.spin(reverse);
-    wait(2000, msec);
-    Catapult.stop();
-    LeftDriveSmart.spin(forward);
-    RightDriveSmart.spin(reverse);
-    wait(2000, msec);
-    LeftDriveSmart.stop();
-    RightDriveSmart.stop();
-    Catapult.spin(forward);
-    wait(4000, msec);
-    Catapult.stop();
-    wait(3*t, msec);
-}
-
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              User Control Task                            */
-/*                                                                           */
-/*  This task is used to control your robot during the user control phase of */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
-
-void usercontrol(void) {
-  // User control code here, inside the loop
-  
-  while (1) {
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
+// define a task that will handle monitoring inputs from Controller1
+int rc_auto_loop_function_Controller1() {
+  // process the controller input every 20 milliseconds
+  // update the motors based on the input values
+  while(true) {
     if(RemoteControlCodeEnabled) {
       // calculate the drivetrain motor velocities from the controller joystick axies
       // left = Axis3
       // right = Axis2
       int drivetrainLeftSideSpeed = Controller1.Axis3.position();
       int drivetrainRightSideSpeed = Controller1.Axis2.position();
-      //int RollerDrive = Controller1.ButtonUp.pressing();
-    
-      if (Controller1.ButtonDown.pressing()){
       
-        RollerDrive.spin(reverse);
-        }
-      else if (Controller1.ButtonUp.pressing()){
-
-        RollerDrive.spin(forward);
-
-
-          }
       // check if the value is inside of the deadband range
-       if (drivetrainLeftSideSpeed < 5 && drivetrainLeftSideSpeed > -5) {
+      if (drivetrainLeftSideSpeed < 5 && drivetrainLeftSideSpeed > -5) {
         // check if the left motor has already been stopped
-         if (DrivetrainLNeedsToBeStopped_Controller1) {
-           // stop the left drive motor
-           LeftDriveSmart.stop();
-           // tell the code that the left motor has been stopped
-           DrivetrainLNeedsToBeStopped_Controller1 = false;
+        if (DrivetrainLNeedsToBeStopped_Controller1) {
+          // stop the left drive motor
+          LeftDriveSmart.stop();
+          // tell the code that the left motor has been stopped
+          DrivetrainLNeedsToBeStopped_Controller1 = false;
         }
       } else {
         // reset the toggle so that the deadband code knows to stop the left motor nexttime the input is in the deadband range
@@ -176,58 +102,141 @@ void usercontrol(void) {
         RightDriveSmart.setVelocity(drivetrainRightSideSpeed, percent);
         RightDriveSmart.spin(forward);
       }
-      // check the ButtonL1/ButtonL2 status to control Motor1
+      // check the ButtonL1/ButtonL2 status to control Motor6
       if (Controller1.ButtonL1.pressing()) {
-        Motor1.spin(reverse);
+        Motor6.spin(forward);
         Controller1LeftShoulderControlMotorsStopped = false;
-      } else if (Controller1.ButtonR1.pressing()) {
-        Motor1.spin(forward);
+      } else if (Controller1.ButtonL2.pressing()) {
+        Motor6.spin(reverse);
         Controller1LeftShoulderControlMotorsStopped = false;
       } else if (!Controller1LeftShoulderControlMotorsStopped) {
-        Motor1.stop();
+        Motor6.stop();
         // set the toggle so that we don't constantly tell the motor to stop when the buttons are released
         Controller1LeftShoulderControlMotorsStopped = true;
       }
-      // check the ButtonR1/ButtonR2 status to control MotorGroup4
-      if (Controller1.ButtonR2.pressing()) {
-        MotorGroup4.spin(forward);
+      // check the ButtonR1/ButtonR2 status to control Catapult
+      if (Controller1.ButtonR1.pressing()) {
+        Catapult.spin(forward);
         Controller1RightShoulderControlMotorsStopped = false;
       } else if (Controller1.ButtonR2.pressing()) {
-        MotorGroup4.spin(forward);
+        Catapult.spin(reverse);
         Controller1RightShoulderControlMotorsStopped = false;
       } else if (!Controller1RightShoulderControlMotorsStopped) {
-        MotorGroup4.stop();
+        Catapult.stop();
         // set the toggle so that we don't constantly tell the motor to stop when the buttons are released
         Controller1RightShoulderControlMotorsStopped = true;
       }
-
-      if (Controller1.ButtonR1.pressing()) {
-        Catapult.spin(reverse);
-        stopCatapult = false;
-      } else if (Controller1.ButtonB.pressing()) {
-        Catapult.spin(forward);
-        stopCatapult = false;
-      } else if (!stopCatapult) {
-        Catapult.stop();
+      // check the ButtonUp/ButtonDown status to control Lift
+      if (Controller1.ButtonUp.pressing()) {
+        Lift.spin(forward);
+        Controller1UpDownButtonsControlMotorsStopped = false;
+      } else if (Controller1.ButtonDown.pressing()) {
+        Lift.spin(reverse);
+        Controller1UpDownButtonsControlMotorsStopped = false;
+      } else if (!Controller1UpDownButtonsControlMotorsStopped) {
+        Lift.stop();
         // set the toggle so that we don't constantly tell the motor to stop when the buttons are released
-        stopCatapult = true;
+        Controller1UpDownButtonsControlMotorsStopped = true;
       }
     }
     // wait before repeating the process
-  
+    wait(20, msec);
   }
-  
-  
-
+  return 0;
+}
 
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
  * 
  * This should be called at the start of your int main function.
  */
-void vexcodeInit( void ) ; 
+void vexcodeInit() {
+  task rc_auto_loop_task_Controller1(rc_auto_loop_function_Controller1);
+}
+
+
+// define your global instances of motors and other devices here
+
+/*---------------------------------------------------------------------------*/
+/*                          Pre-Autonomous Functions                         */
+/*                                                                           */
+/*  You may want to perform some actions before the competition starts.      */
+/*  Do them in the following function.  You must return from this function   */
+/*  or the autonomous and usercontrol tasks will not be started.  This       */
+/*  function is only called once after the V5 has been powered on and        */
+/*  not every time that the robot is disabled.                               */
+/*---------------------------------------------------------------------------*/
+
+void pre_auton(void) {
+  // Initializing Robot Configuration. DO NOT REMOVE!
+  vexcodeInit();
+  const int t = 1000;
+    wait(t, msec);
+    RightDriveSmart.spin(forward);
+    LeftDriveSmart.spin(reverse);
+    wait(2000, msec);
+    RightDriveSmart.stop();
+    LeftDriveSmart.stop();
+    Catapult.spin(reverse);
+    wait(2000, msec);
+    Catapult.stop();
+    LeftDriveSmart.spin(forward);
+    RightDriveSmart.spin(reverse);
+    wait(2000, msec);
+    LeftDriveSmart.stop();
+    RightDriveSmart.stop();
+    Catapult.spin(forward);
+    wait(4000, msec);
+    Catapult.stop();
+    wait(3*t, msec);
+  
+  // All activities that occur before the competition starts
+  // Example: clearing encoders, setting servo positions, ...
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              Autonomous Task                              */
+/*                                                                           */
+/*  This task is used to control your robot during the autonomous phase of   */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
+
+void autonomous(void) {
+  // ..........................................................................
+  // Insert autonomous user code here.
+  // ..........................................................................
+  Catapult.spin(reverse);
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              User Control Task                            */
+/*                                                                           */
+/*  This task is used to control your robot during the user control phase of */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
+
+void usercontrol(void) {
+  // User control code here, inside the loop
+  
+  while (1) {
+    
+    // wait before repeating the process
+  
+  }
   
 }
+
+/**
+ * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
+ * 
+ * This should be called at the start of your int main function.
+ */
 
     // ........................................................................
     // Insert user code here. This is where you use the joystick values to
@@ -243,6 +252,7 @@ void vexcodeInit( void ) ;
 // Main will set up the competition functions and callbacks.
 //
 int main() {
+  vexcodeInit();
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
@@ -253,3 +263,5 @@ int main() {
   // Prevent main from exiting with an infinite loop.
  
   }
+
+  
