@@ -15,6 +15,10 @@ controller Controller1 = controller(primary);
 motor Catapult = motor(PORT8, ratio36_1, false);
 motor Lift = motor(PORT5, ratio36_1, false);
 motor Motor6 = motor(PORT6, ratio18_1, false);
+motor LeftDriveSmart2 = motor(PORT4, ratio18_1, true);
+motor RightDriveSmart2 = motor(PORT1, ratio18_1, false);
+motor_group Rightdrive = motor_group(LeftDriveSmart, LeftDriveSmart2);
+motor_group Leftdrive = motor_group(RightDriveSmart, RightDriveSmart2);
 
 // VEXcode generated functions
 // define variable for remote controller enable/disable
@@ -25,7 +29,7 @@ bool Controller1RightShoulderControlMotorsStopped = true;
 bool Controller1UpDownButtonsControlMotorsStopped = true;
 bool DrivetrainLNeedsToBeStopped_Controller1 = true;
 bool DrivetrainRNeedsToBeStopped_Controller1 = true;
-
+bool Controller1ABButtonsControlMotorsStopped = true;
 // define a task that will handle monitoring inputs from Controller1
 int rc_auto_loop_function_Controller1() {
   // process the controller input every 20 milliseconds
@@ -43,7 +47,7 @@ int rc_auto_loop_function_Controller1() {
         // check if the left motor has already been stopped
         if (DrivetrainLNeedsToBeStopped_Controller1) {
           // stop the left drive motor
-          LeftDriveSmart.stop();
+          Leftdrive.stop();
           // tell the code that the left motor has been stopped
           DrivetrainLNeedsToBeStopped_Controller1 = false;
         }
@@ -56,7 +60,7 @@ int rc_auto_loop_function_Controller1() {
         // check if the right motor has already been stopped
         if (DrivetrainRNeedsToBeStopped_Controller1) {
           // stop the right drive motor
-          RightDriveSmart.stop();
+          Rightdrive.stop();
           // tell the code that the right motor has been stopped
           DrivetrainRNeedsToBeStopped_Controller1 = false;
         }
@@ -67,13 +71,13 @@ int rc_auto_loop_function_Controller1() {
       
       // only tell the left drive motor to spin if the values are not in the deadband range
       if (DrivetrainLNeedsToBeStopped_Controller1) {
-        LeftDriveSmart.setVelocity(drivetrainLeftSideSpeed, percent);
-        LeftDriveSmart.spin(forward);
+        Leftdrive.setVelocity(drivetrainLeftSideSpeed, percent);
+        Leftdrive.spin(forward);
       }
       // only tell the right drive motor to spin if the values are not in the deadband range
       if (DrivetrainRNeedsToBeStopped_Controller1) {
-        RightDriveSmart.setVelocity(drivetrainRightSideSpeed, percent);
-        RightDriveSmart.spin(forward);
+        Rightdrive.setVelocity(drivetrainRightSideSpeed, percent);
+        Rightdrive.spin(forward);
       }
       // check the ButtonL1/ButtonL2 status to control Motor6
       if (Controller1.ButtonL1.pressing()) {
@@ -110,6 +114,17 @@ int rc_auto_loop_function_Controller1() {
         Lift.stop();
         // set the toggle so that we don't constantly tell the motor to stop when the buttons are released
         Controller1UpDownButtonsControlMotorsStopped = true;
+      }
+      if (Controller1.ButtonA.pressing()) {
+        Catapult2.spin(forward);
+        Controller1ABButtonsControlMotorsStopped = false;
+      } else if (Controller1.ButtonB.pressing()) {
+        Catapult2.spin(reverse);
+        Controller1ABButtonsControlMotorsStopped = false;
+      } else if (!Controller1ABButtonsControlMotorsStopped) {
+        Catapult2.stop();
+        // set the toggle so that we don't constantly tell the motor to stop when the buttons are released
+        Controller1ABButtonsControlMotorsStopped = true;
       }
     }
     // wait before repeating the process
