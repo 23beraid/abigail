@@ -90,16 +90,8 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 void autonomous(void) {
-  RightDrive.setVelocity(100, percent);
-  LeftDrive.setVelocity(100, percent);
-RightDrive.rotateFor(forward, 42, rotationUnits::rev) && LeftDrive.rotateFor(forward, 42, rotationUnits::rev);
-wait(1, sec);
-intake.rotateFor(forward, 5, rotationUnits::raw);
-
- // Flywheel.spin(forward);
- // Flywheel.setVelocity(100, percent);
- //wait(10, seconds);
- //Flywheel.stop();
+   wait(52, sec);
+   Expansion = true;
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
