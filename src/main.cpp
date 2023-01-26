@@ -19,10 +19,12 @@
 using namespace vex;
 
 controller Controller1 = controller(primary);
-brain  Brain;
 
+
+
+vision DiscSensor (PORT5);
 motor Flywheel = motor(PORT8, ratio6_1, true);
-motor intake = motor(PORT10, ratio6_1, false);
+motor intake = motor(PORT10, ratio18_1, false);
 motor RightDrive1 = motor(PORT11, ratio6_1, false);
 motor RightDrive2 = motor(PORT14, ratio6_1, false);
 motor RightDrive3 = motor(PORT13, ratio6_1, false);
@@ -34,18 +36,28 @@ motor_group LeftDrive = motor_group(LeftDrive1, LeftDrive2,LeftDrive3);
 digital_out Expansion = digital_out(Brain.ThreeWirePort.G);
 digital_out Expansion2 = digital_out(Brain.ThreeWirePort.F);
 digital_out Indexer = digital_out(Brain.ThreeWirePort.H);
+digital_in Switch = digital_in(Brain.ThreeWirePort.E);
 
 
 bool intakestate = false;
 bool DrivetrainLNeedsToBeStopped_Controller1 = true;
 bool DrivetrainRNeedsToBeStopped_Controller1 = true;
 bool drivestate = false;
+float speedMultiplier = 1;
 
 int rc_auto_loop_function_Controller1();
 
 
-
-void toggleintake(){
+void ToggleDriveDirection(){
+  if(drivestate){
+    speedMultiplier = 1;
+    drivestate = false;
+  }else{
+    speedMultiplier = -1;
+    drivestate = true;
+  }
+}
+void ToggleIntake(){
    if (intakestate){
       intake.stop();
       intakestate = false;
@@ -90,8 +102,9 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 void autonomous(void) {
-   wait(52, sec);
-   Expansion = true;
+ wait(5, sec);
+ Expansion = true;
+  //intake.spin(forward, waitUntil());
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
@@ -109,12 +122,15 @@ void autonomous(void) {
 
 void usercontrol(void) {
  
-  Controller1.ButtonA.pressed(toggleintake);
+  Controller1.ButtonA.pressed(ToggleIntake);
+  Controller1.ButtonL2.pressed(ToggleDriveDirection);
   Brain.Screen.clearScreen(color::blue);
+
   // User control code here, inside the loop
   while (1) {
-    int drivetrainLeftSideSpeed = Controller1.Axis3.position();
-      int drivetrainRightSideSpeed = Controller1.Axis2.position();
+      
+      int drivetrainLeftSideSpeed = Controller1.Axis2.position() * speedMultiplier;
+      int drivetrainRightSideSpeed = Controller1.Axis3.position() * speedMultiplier;
       // check if the value is inside of the deadband range
       if (drivetrainLeftSideSpeed < 5 && drivetrainLeftSideSpeed > -5) {
         // check if the left motor has already been stopped
@@ -155,7 +171,7 @@ void usercontrol(void) {
   
     if(Controller1.ButtonR2.pressing()){
       Flywheel.spin(forward);
-      Flywheel.setVelocity(100.0, percent);
+      Flywheel.spin(forward, 100, percentUnits::pct);
     }else{
       Flywheel.stop();
     }
@@ -164,18 +180,19 @@ void usercontrol(void) {
 
     }else{
       Indexer = false;
+
     }if(Controller1.ButtonUp.pressing()){
       Expansion = true;
-
-    }else{
-      Expansion = false;
-    }if(Controller1.ButtonUp.pressing()){
       Expansion2 = true;
 
     }else{
+      Expansion = false;
       Expansion2 = false;
+    }if(Controller1.ButtonL1.pressing()){
+      intake.setVelocity(100, percent);
+      intake.spin(reverse);
+
     }
-    
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
   }
