@@ -140,9 +140,8 @@ void autonomous(void) {
   Drive.spinFor(forward, 3, rotationUnits::rev);
   LeftDrive.spinFor(forward, 3, rotationUnits::rev, false);
   RightDrive.spinFor(forward, 3, rotationUnits::rev, true);
-
-  
-  //intake.spin(forward, waitUntil());
+  wait(1, sec);
+  Expansion = true;
 
   // ..........................................................................
   // Insert autonomous user code here.
