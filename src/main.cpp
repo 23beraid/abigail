@@ -45,8 +45,9 @@ signature Vision5__SIG_6 = signature(6, 0, 0, 0, 0, 0, 0, 2.5, 0);
 signature Vision5__SIG_7 = signature(7, 0, 0, 0, 0, 0, 0, 2.5, 0);
 //Define the blue scanner
 signature Vision5__BLUEBOX = signature(1, -3441, -2785, -3113, 8975, 10355, 9665, 2.5, 0);
+signature Vision5__REDBOX = signature(3, 8099, 8893, 8496, -1505, -949, -1227, 2.5, 0);
 //call the vision sensor
-vision Vision5 = vision(PORT5, 50, Vision5__BLUEBOX, Vision5__SIG_4, Vision5__SIG_5, Vision5__SIG_6, Vision5__SIG_7);
+vision Vision5 = vision(PORT5, 50, Vision5__BLUEBOX, Vision5__REDBOX, Vision5__SIG_4, Vision5__SIG_5, Vision5__SIG_6, Vision5__SIG_7);
 
 event checkBlue = event();
 
@@ -84,14 +85,14 @@ void hasBlueCallback(){
   Vision5.takeSnapshot(Vision5__BLUEBOX);
   if (Vision5.objectCount > 0) {
     visionCountdown = 2;
-    Brain.Screen.print("Blue Object Found");
+    Brain.Screen.print("Object Found");
     intake.spin(forward);
   } else {
     visionCountdown -= 1;
     if(visionCountdown < 1){
       intake.stop();
     }
-    Brain.Screen.print("No Blue Object");
+    Brain.Screen.print("No Object");
   }
 }
 
@@ -135,9 +136,11 @@ void autonomous(void) {
   Drive.spinFor(reverse, 3, rotationUnits::rev);
   intake.setVelocity(50, percent);
   while(visionCountdown > 0){
-    checkBlue.broadcastAndWait();
-  }
-    
+    checkBlue.broadcastAndWait();}
+  Drive.spinFor(forward, 3, rotationUnits::rev);
+  LeftDrive.spinFor(forward, 3, rotationUnits::rev, false);
+  RightDrive.spinFor(forward, 3, rotationUnits::rev, true);
+
   
   //intake.spin(forward, waitUntil());
 
