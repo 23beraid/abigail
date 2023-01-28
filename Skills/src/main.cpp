@@ -138,9 +138,10 @@ void autonomous(void) {
   while(visionCountdown > 0){
     checkBlue.broadcastAndWait();}
   Drive.spinFor(forward, 3, rotationUnits::rev);
-  LeftDrive.spinFor(forward, 3, rotationUnits::rev, false);
+  LeftDrive.spinFor(forward, 2, rotationUnits::rev, false);
   RightDrive.spinFor(forward, 3, rotationUnits::rev, true);
-
+  Expansion = true;
+  Expansion2 = true;
   
   //intake.spin(forward, waitUntil());
 

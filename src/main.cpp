@@ -135,8 +135,10 @@ void autonomous(void) {
   Drive.setVelocity(50, percent);
   Drive.spinFor(reverse, 3, rotationUnits::rev);
   intake.setVelocity(50, percent);
+  visionCountdown = 10;
   while(visionCountdown > 0){
-    checkBlue.broadcastAndWait();}
+    checkBlue.broadcastAndWait();
+  }
   Drive.spinFor(forward, 3, rotationUnits::rev);
   LeftDrive.spinFor(forward, 3, rotationUnits::rev, false);
   RightDrive.spinFor(forward, 3, rotationUnits::rev, true);
