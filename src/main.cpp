@@ -84,7 +84,7 @@ void ToggleIntake(){
 void hasBlueCallback(){
   Vision5.takeSnapshot(Vision5__BLUEBOX);
   if (Vision5.objectCount > 0) {
-    visionCountdown = 2;
+    visionCountdown = 4;
     Brain.Screen.print("Object Found");
     intake.spin(forward);
   } else {
@@ -132,16 +132,20 @@ void pre_auton(void) {
 void autonomous(void) {
   motor_group Drive = motor_group(LeftDrive1, LeftDrive2, LeftDrive3, RightDrive1, RightDrive2, RightDrive3);
   Brain.Screen.clearScreen(color::green);
-  Drive.setVelocity(50, percent);
-  Drive.spinFor(reverse, 3, rotationUnits::rev);
+  Drive.setVelocity(25, percent);
+  LeftDrive.setVelocity(25, percent);
+  RightDrive.setVelocity(25, percent);
+  //Drive.spinFor(reverse, 3, rotationUnits::rev, false);
   intake.setVelocity(50, percent);
   while(visionCountdown > 0){
     checkBlue.broadcastAndWait();}
-  Drive.spinFor(forward, 3, rotationUnits::rev);
-  LeftDrive.spinFor(forward, 3, rotationUnits::rev, false);
-  RightDrive.spinFor(forward, 3, rotationUnits::rev, true);
-  wait(1, sec);
- Expansion = true;
+  Drive.stop();
+  //Drive.spinFor(forward, 0.5, rotationUnits::rev);
+  RightDrive.spinFor(reverse, 1, rotationUnits::rev, false);
+  LeftDrive.spinFor(forward, 1, rotationUnits::rev, true);
+  //RightDrive.spinFor(forward, 3, rotationUnits::rev, true);
+  //wait(1, sec);
+  //Expansion = true;
 
   // ..........................................................................
   // Insert autonomous user code here.
