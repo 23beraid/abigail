@@ -21,8 +21,11 @@ using namespace vex;
 controller Controller1 = controller(primary);
 brain  Brain;
 
+
+
+vision DiscSensor (PORT5);
 motor Flywheel = motor(PORT8, ratio6_1, true);
-motor intake = motor(PORT10, ratio6_1, false);
+motor intake = motor(PORT10, ratio18_1, false);
 motor RightDrive1 = motor(PORT11, ratio6_1, false);
 motor RightDrive2 = motor(PORT14, ratio6_1, false);
 motor RightDrive3 = motor(PORT13, ratio6_1, false);
@@ -34,18 +37,40 @@ motor_group LeftDrive = motor_group(LeftDrive1, LeftDrive2,LeftDrive3);
 digital_out Expansion = digital_out(Brain.ThreeWirePort.G);
 digital_out Expansion2 = digital_out(Brain.ThreeWirePort.F);
 digital_out Indexer = digital_out(Brain.ThreeWirePort.H);
+digital_in Switch = digital_in(Brain.ThreeWirePort.E);
+//I have no idea what these four lines actually do, but it won't work without them
+signature Vision5__SIG_4 = signature(4, 0, 0, 0, 0, 0, 0, 2.5, 0);
+signature Vision5__SIG_5 = signature(5, 0, 0, 0, 0, 0, 0, 2.5, 0);
+signature Vision5__SIG_6 = signature(6, 0, 0, 0, 0, 0, 0, 2.5, 0);
+signature Vision5__SIG_7 = signature(7, 0, 0, 0, 0, 0, 0, 2.5, 0);
+//Define the blue scanner
+signature Vision5__BLUEBOX = signature(1, -3441, -2785, -3113, 8975, 10355, 9665, 2.5, 0);
+signature Vision5__REDBOX = signature(3, 8099, 8893, 8496, -1505, -949, -1227, 2.5, 0);
+//call the vision sensor
+vision Vision5 = vision(PORT5, 50, Vision5__BLUEBOX, Vision5__REDBOX, Vision5__SIG_4, Vision5__SIG_5, Vision5__SIG_6, Vision5__SIG_7);
 
+event checkRed = event();
 
 bool intakestate = false;
 bool DrivetrainLNeedsToBeStopped_Controller1 = true;
 bool DrivetrainRNeedsToBeStopped_Controller1 = true;
 bool drivestate = false;
+float speedMultiplier = 1;
+int visionCountdown = 2;
 
 int rc_auto_loop_function_Controller1();
 
 
-
-void toggleintake(){
+void ToggleDriveDirection(){
+  if(drivestate){
+    speedMultiplier = 1;
+    drivestate = false;
+  }else{
+    speedMultiplier = -1;
+    drivestate = true;
+  }
+}
+void ToggleIntake(){
    if (intakestate){
       intake.stop();
       intakestate = false;
@@ -56,6 +81,20 @@ void toggleintake(){
       }
 }
 
+void hasRedCallback(){
+  Vision5.takeSnapshot(Vision5__REDBOX);
+  if (Vision5.objectCount > 0) {
+    visionCountdown = 4;
+    Brain.Screen.print("Object Found");
+    intake.spin(forward);
+  } else {
+    visionCountdown -= 1;
+    if(visionCountdown < 1){
+      intake.stop();
+    }
+    Brain.Screen.print("No Object");
+  }
+}
 
 competition Competition;
 
@@ -75,6 +114,7 @@ void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
   Brain.Screen.print(color::cyan);
+  checkRed(hasRedCallback);
 
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
@@ -90,16 +130,23 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 void autonomous(void) {
-  RightDrive.setVelocity(100, percent);
-  LeftDrive.setVelocity(100, percent);
-RightDrive.rotateFor(forward, 42, rotationUnits::rev) && LeftDrive.rotateFor(forward, 42, rotationUnits::rev);
-wait(1, sec);
-intake.rotateFor(forward, 5, rotationUnits::raw);
+  motor_group Drive = motor_group(LeftDrive1, LeftDrive2, LeftDrive3, RightDrive1, RightDrive2, RightDrive3);
+  Brain.Screen.clearScreen(color::green);
+  Drive.setVelocity(25, percent);
+  LeftDrive.setVelocity(25, percent);
+  RightDrive.setVelocity(25, percent);
+  //Drive.spinFor(reverse, 3, rotationUnits::rev, false);
+  intake.setVelocity(50, percent);
+  while(visionCountdown > 0){
+    checkRed.broadcastAndWait();}
+  Drive.stop();
+  //Drive.spinFor(forward, 0.5, rotationUnits::rev);
+  RightDrive.spinFor(reverse, 1, rotationUnits::rev, false);
+  LeftDrive.spinFor(forward, 1, rotationUnits::rev, true);
+  //RightDrive.spinFor(forward, 3, rotationUnits::rev, true);
+  //wait(1, sec);
+  //Expansion = true;
 
- // Flywheel.spin(forward);
- // Flywheel.setVelocity(100, percent);
- //wait(10, seconds);
- //Flywheel.stop();
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
@@ -116,13 +163,13 @@ intake.rotateFor(forward, 5, rotationUnits::raw);
 /*---------------------------------------------------------------------------*/
 
 void usercontrol(void) {
- 
-  Controller1.ButtonA.pressed(toggleintake);
-  Brain.Screen.clearScreen(color::blue);
+  Controller1.ButtonA.pressed(ToggleIntake);
+  Controller1.ButtonL2.pressed(ToggleDriveDirection);
+  Brain.Screen.clearScreen(color::red);
   // User control code here, inside the loop
   while (1) {
-    int drivetrainLeftSideSpeed = Controller1.Axis3.position();
-      int drivetrainRightSideSpeed = Controller1.Axis2.position();
+      int drivetrainLeftSideSpeed = Controller1.Axis2.position() * speedMultiplier;
+      int drivetrainRightSideSpeed = Controller1.Axis3.position() * speedMultiplier;
       // check if the value is inside of the deadband range
       if (drivetrainLeftSideSpeed < 5 && drivetrainLeftSideSpeed > -5) {
         // check if the left motor has already been stopped
@@ -163,7 +210,7 @@ void usercontrol(void) {
   
     if(Controller1.ButtonR2.pressing()){
       Flywheel.spin(forward);
-      Flywheel.setVelocity(100.0, percent);
+      Flywheel.spin(forward, 100, percentUnits::pct);
     }else{
       Flywheel.stop();
     }
@@ -172,18 +219,22 @@ void usercontrol(void) {
 
     }else{
       Indexer = false;
+
     }if(Controller1.ButtonUp.pressing()){
       Expansion = true;
-
-    }else{
-      Expansion = false;
-    }if(Controller1.ButtonUp.pressing()){
       Expansion2 = true;
 
     }else{
+      Expansion = false;
       Expansion2 = false;
+    }if(Controller1.ButtonL1.pressing()){
+      intake.setVelocity(100, percent);
+      intake.spin(reverse);
+
     }
-    
+    if(Controller1.ButtonB.pressing()){
+      checkRed.broadcastAndWait();
+    }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
   }
