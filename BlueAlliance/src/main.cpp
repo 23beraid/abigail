@@ -71,6 +71,7 @@ void ToggleDriveDirection(){
     drivestate = true;
   }
 }
+
 void ToggleIntake(){
    if (intakestate){
       intake.stop();
@@ -207,12 +208,20 @@ void usercontrol(void) {
       // only tell the left drive motor to spin if the values are not in the deadband range
       if (DrivetrainLNeedsToBeStopped_Controller1) {
         LeftDrive.setVelocity(drivetrainLeftSideSpeed, percent);
-        LeftDrive.spin(forward);
+        if(speedMultiplier > 0){
+          LeftDrive.spin(forward);
+        } else {
+          RightDrive.spin(forward);
+        }
       }
       // only tell the right drive motor to spin if the values are not in the deadband range
       if (DrivetrainRNeedsToBeStopped_Controller1) {
         RightDrive.setVelocity(drivetrainRightSideSpeed, percent);
-        RightDrive.spin(forward);
+        if(speedMultiplier > 0){
+          RightDrive.spin(forward);
+        } else {
+          LeftDrive.spin(forward);
+        }
       }
   
     if(Controller1.ButtonR2.pressing()){
