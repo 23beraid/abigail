@@ -153,7 +153,7 @@ void autonomous(void) {
   intake.setVelocity(100, percent);
   intake.spinFor(reverse, 0.75, rotationUnits::rev, true);
   Drive.stop();
-  //Drive.setVelocity(50, percent);
+  //If nothing works, comment everything under here
   Drive.spinFor(reverse, 1.5, rotationUnits::rev, true);
   TurnLeft(140);
   intake.spin(reverse);
@@ -162,13 +162,11 @@ void autonomous(void) {
   TurnRight(90);
   Flywheel.setVelocity(100, percent);
   Flywheel.spin(forward);
-  //Drive.spinFor(reverse, 0.25, rotationUnits::rev, false);
   wait(2000, msec);
   Indexer = true;
   wait(250, msec);
   Indexer = false;
   Flywheel.stop();
-  //Drive.spinFor(forward, 0.25, rotationUnits::rev, true);
   TurnLeft(85);
   intake.spin(reverse);
   Drive.spinFor(forward, 8.1, rotationUnits::rev, true);
