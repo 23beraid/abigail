@@ -145,15 +145,40 @@ void pre_auton(void) {
 void autonomous(void) {
   motor_group Drive = motor_group(LeftDrive1, LeftDrive2, LeftDrive3, RightDrive1, RightDrive2, RightDrive3);
   Brain.Screen.clearScreen(color::green);
+  LeftDrive.setVelocity(10, percent);
+  RightDrive.setVelocity(10, percent);
   Drive.setVelocity(25, percent);
-  LeftDrive.setVelocity(25, percent);
-  RightDrive.setVelocity(25, percent);
-  Drive.spinFor(reverse, 1, rotationUnits::rev, false);
-  intake.setVelocity(50, percent);
-  while(visionCountdown > 0){
-    checkRed.broadcastAndWait();}
+  Drive.spinFor(forward, 0.5, rotationUnits::rev, false);
+  wait(200, msec);
+  intake.setVelocity(100, percent);
+  intake.spinFor(reverse, 0.75, rotationUnits::rev, true);
   Drive.stop();
+  //Drive.setVelocity(50, percent);
+  Drive.spinFor(reverse, 1.5, rotationUnits::rev, true);
+  TurnLeft(140);
+  intake.spin(reverse);
+  Drive.spinFor(forward, 6, rotationUnits::rev, true);
+  intake.stop();
   TurnRight(90);
+  Flywheel.setVelocity(100, percent);
+  Flywheel.spin(forward);
+  //Drive.spinFor(reverse, 0.25, rotationUnits::rev, false);
+  wait(2000, msec);
+  Indexer = true;
+  wait(250, msec);
+  Indexer = false;
+  Flywheel.stop();
+  //Drive.spinFor(forward, 0.25, rotationUnits::rev, true);
+  TurnLeft(85);
+  intake.spin(reverse);
+  Drive.spinFor(forward, 8.1, rotationUnits::rev, true);
+  intake.stop();
+  TurnRight(45);
+  Drive.setVelocity(25, percent);
+  Drive.spinFor(forward, 1, rotationUnits::rev, false);
+  wait(500, msec);
+  intake.setVelocity(100, percent);
+  intake.spinFor(reverse, 0.75, rotationUnits::rev, true);
 
   // ..........................................................................
   // Insert autonomous user code here.
