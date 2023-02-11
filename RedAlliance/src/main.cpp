@@ -35,7 +35,6 @@ motor LeftDrive2 = motor(PORT14, ratio6_1, false);
 motor LeftDrive3 = motor(PORT13, ratio6_1, false);
 motor_group LeftDrive = motor_group(LeftDrive1, LeftDrive2,LeftDrive3);
 digital_out Expansion = digital_out(Brain.ThreeWirePort.G);
-//digital_out Expansion2 = digital_out(Brain.ThreeWirePort.F);
 digital_out Indexer = digital_out(Brain.ThreeWirePort.H);
 digital_in Switch = digital_in(Brain.ThreeWirePort.E);
 //Define vision values
