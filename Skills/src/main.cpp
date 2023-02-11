@@ -23,33 +23,33 @@ brain  Brain;
 
 
 
-vision DiscSensor (PORT5);
+vision DiscSensor (PORT6);
 motor Flywheel = motor(PORT8, ratio6_1, true);
-motor intake = motor(PORT10, ratio18_1, false);
-motor RightDrive1 = motor(PORT11, ratio6_1, false);
-motor RightDrive2 = motor(PORT14, ratio6_1, false);
-motor RightDrive3 = motor(PORT13, ratio6_1, false);
+motor intake = motor(PORT10, ratio6_1, false);
+motor RightDrive1 = motor(PORT16, ratio6_1, true);
+motor RightDrive2 = motor(PORT17, ratio6_1, true);
+motor RightDrive3 = motor(PORT18, ratio6_1, true);
 motor_group RightDrive = motor_group(RightDrive1, RightDrive2, RightDrive3);
-motor LeftDrive1 = motor(PORT16, ratio6_1, true);
-motor LeftDrive2 = motor(PORT17, ratio6_1, true);
-motor LeftDrive3 = motor(PORT18, ratio6_1, true);
+motor LeftDrive1 = motor(PORT11, ratio6_1, false);
+motor LeftDrive2 = motor(PORT14, ratio6_1, false);
+motor LeftDrive3 = motor(PORT13, ratio6_1, false);
 motor_group LeftDrive = motor_group(LeftDrive1, LeftDrive2,LeftDrive3);
 digital_out Expansion = digital_out(Brain.ThreeWirePort.G);
-digital_out Expansion2 = digital_out(Brain.ThreeWirePort.F);
 digital_out Indexer = digital_out(Brain.ThreeWirePort.H);
 digital_in Switch = digital_in(Brain.ThreeWirePort.E);
-//I have no idea what these four lines actually do, but it won't work without them
+//Define vision values
 signature Vision5__SIG_4 = signature(4, 0, 0, 0, 0, 0, 0, 2.5, 0);
 signature Vision5__SIG_5 = signature(5, 0, 0, 0, 0, 0, 0, 2.5, 0);
 signature Vision5__SIG_6 = signature(6, 0, 0, 0, 0, 0, 0, 2.5, 0);
 signature Vision5__SIG_7 = signature(7, 0, 0, 0, 0, 0, 0, 2.5, 0);
 //Define the blue scanner
 signature Vision5__BLUEBOX = signature(1, -3441, -2785, -3113, 8975, 10355, 9665, 2.5, 0);
+//Define the red scanner
 signature Vision5__REDBOX = signature(3, 8099, 8893, 8496, -1505, -949, -1227, 2.5, 0);
 //call the vision sensor
 vision Vision5 = vision(PORT5, 50, Vision5__BLUEBOX, Vision5__REDBOX, Vision5__SIG_4, Vision5__SIG_5, Vision5__SIG_6, Vision5__SIG_7);
 
-event checkBlue = event();
+event checkRed = event();
 
 bool intakestate = false;
 bool DrivetrainLNeedsToBeStopped_Controller1 = true;
@@ -61,15 +61,16 @@ int visionCountdown = 2;
 int rc_auto_loop_function_Controller1();
 
 
-void ToggleDriveDirection(){
-  if(drivestate){
-    speedMultiplier = 1;
-    drivestate = false;
-  }else{
-    speedMultiplier = -1;
-    drivestate = true;
-  }
-}
+// void ToggleDriveDirection(){
+//   if(drivestate){
+//     speedMultiplier = 1;
+//     drivestate = false;
+//   }else{
+//     speedMultiplier = -1;
+//     drivestate = true;
+//   }
+// }
+
 void ToggleIntake(){
    if (intakestate){
       intake.stop();
@@ -81,19 +82,36 @@ void ToggleIntake(){
       }
 }
 
-void hasBlueCallback(){
-  Vision5.takeSnapshot(Vision5__BLUEBOX);
-  if (Vision5.objectCount > 0) {
-    visionCountdown = 4;
-    Brain.Screen.print("Object Found");
-    intake.spin(forward);
-  } else {
-    visionCountdown -= 1;
-    if(visionCountdown < 1){
-      intake.stop();
-    }
-    Brain.Screen.print("No Object");
-  }
+// void hasRedCallback(){
+//   Vision5.takeSnapshot(Vision5__BLUEBOX);
+//   if (Vision5.objectCount > 0) {
+//     visionCountdown = 4;
+//     Brain.Screen.print("Object Found");
+//     intake.spin(forward);
+//   } else {
+//     visionCountdown -= 1;
+//     if(visionCountdown < 1){
+//       intake.stop();
+//     }
+//     Brain.Screen.print("No Object");
+//   }
+// }
+
+//Turn right.  Don't input values over 180, instead just use a TurnLeft function
+//DO NOT USE THIS FOR DRIVER CONTROL.  This is built for auton
+  //where the amount of revolutions is specified
+void TurnRight(float degrees){
+  LeftDrive.setVelocity(25, percent);
+  RightDrive.setVelocity(25, percent);
+  RightDrive.spinFor(forward, degrees/75, rotationUnits::rev, false);
+  LeftDrive.spinFor(reverse, degrees/75, rotationUnits::rev, true);
+}
+//Turn left.  Same deal as turn right
+void TurnLeft(float degrees){
+  LeftDrive.setVelocity(25, percent);
+  RightDrive.setVelocity(25, percent);
+  RightDrive.spinFor(reverse, degrees/75, rotationUnits::rev, false);
+  LeftDrive.spinFor(forward, degrees/75, rotationUnits::rev, true);
 }
 
 competition Competition;
@@ -114,8 +132,7 @@ void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
   Brain.Screen.print(color::cyan);
-  checkBlue(hasBlueCallback);
-
+  //checkRed(hasRedCallback);
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 }
@@ -132,20 +149,41 @@ void pre_auton(void) {
 void autonomous(void) {
   motor_group Drive = motor_group(LeftDrive1, LeftDrive2, LeftDrive3, RightDrive1, RightDrive2, RightDrive3);
   Brain.Screen.clearScreen(color::green);
+  LeftDrive.setVelocity(10, percent);
+  RightDrive.setVelocity(10, percent);
   Drive.setVelocity(25, percent);
-  LeftDrive.setVelocity(25, percent);
-  RightDrive.setVelocity(25, percent);
-  //Drive.spinFor(reverse, 3, rotationUnits::rev, false);
-  intake.setVelocity(50, percent);
-  while(visionCountdown > 0){
-    checkBlue.broadcastAndWait();}
+  Drive.spinFor(forward, 0.5, rotationUnits::rev, false);
+  wait(200, msec);
+  intake.setVelocity(100, percent);
+  intake.spinFor(reverse, 0.75, rotationUnits::rev, true);
   Drive.stop();
-  //Drive.spinFor(forward, 0.5, rotationUnits::rev);
-  RightDrive.spinFor(reverse, 1, rotationUnits::rev, false);
-  LeftDrive.spinFor(forward, 1, rotationUnits::rev, true);
-  //RightDrive.spinFor(forward, 3, rotationUnits::rev, true);
-  //wait(1, sec);
-  //Expansion = true;
+  Drive.setVelocity(50, percent);
+  Drive.spinFor(reverse, 1.5, rotationUnits::rev, true);
+  Expansion = true;
+  // TurnLeft(140);
+  // intake.spin(reverse);
+  // Drive.spinFor(forward, 6, rotationUnits::rev, true);
+  // intake.stop();
+  // TurnRight(90);
+  // Flywheel.setVelocity(100, percent);
+  // Flywheel.spin(forward);
+  // //Drive.spinFor(reverse, 0.25, rotationUnits::rev, false);
+  // wait(2000, msec);
+  // Indexer = true;
+  // wait(250, msec);
+  // Indexer = false;
+  // Flywheel.stop();
+  // //Drive.spinFor(forward, 0.25, rotationUnits::rev, true);
+  // TurnLeft(85);
+  // intake.spin(reverse);
+  // Drive.spinFor(forward, 8.1, rotationUnits::rev, true);
+  // intake.stop();
+  // TurnRight(45);
+  // Drive.setVelocity(25, percent);
+  // Drive.spinFor(forward, 1, rotationUnits::rev, false);
+  // wait(500, msec);
+  // intake.setVelocity(100, percent);
+  // intake.spinFor(reverse, 0.75, rotationUnits::rev, true);
 
   // ..........................................................................
   // Insert autonomous user code here.
@@ -164,7 +202,7 @@ void autonomous(void) {
 
 void usercontrol(void) {
   Controller1.ButtonA.pressed(ToggleIntake);
-  Controller1.ButtonL2.pressed(ToggleDriveDirection);
+  //Controller1.ButtonL2.pressed(ToggleDriveDirection);
   Brain.Screen.clearScreen(color::red);
   // User control code here, inside the loop
   while (1) {
@@ -200,12 +238,20 @@ void usercontrol(void) {
       // only tell the left drive motor to spin if the values are not in the deadband range
       if (DrivetrainLNeedsToBeStopped_Controller1) {
         LeftDrive.setVelocity(drivetrainLeftSideSpeed, percent);
-        LeftDrive.spin(forward);
+        if(speedMultiplier > 0){
+          LeftDrive.spin(forward);
+        } else {
+          RightDrive.spin(forward);
+        }
       }
       // only tell the right drive motor to spin if the values are not in the deadband range
       if (DrivetrainRNeedsToBeStopped_Controller1) {
         RightDrive.setVelocity(drivetrainRightSideSpeed, percent);
-        RightDrive.spin(forward);
+        if(speedMultiplier > 0){
+          RightDrive.spin(forward);
+        } else {
+          LeftDrive.spin(forward);
+        }
       }
   
     if(Controller1.ButtonR2.pressing()){
@@ -222,18 +268,18 @@ void usercontrol(void) {
 
     }if(Controller1.ButtonUp.pressing()){
       Expansion = true;
-      Expansion2 = true;
+      //Expansion2 = true;
 
     }else{
       Expansion = false;
-      Expansion2 = false;
+      //Expansion2 = false;
     }if(Controller1.ButtonL1.pressing()){
       intake.setVelocity(100, percent);
       intake.spin(reverse);
 
     }
     if(Controller1.ButtonB.pressing()){
-      checkBlue.broadcastAndWait();
+      checkRed.broadcastAndWait();
     }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.

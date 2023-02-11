@@ -194,7 +194,7 @@ void autonomous(void) {
 
 void usercontrol(void) {
   Controller1.ButtonA.pressed(ToggleIntake);
-  Controller1.ButtonL2.pressed(ToggleDriveDirection);
+  //Controller1.ButtonL2.pressed(ToggleDriveDirection);
   Brain.Screen.clearScreen(color::red);
   // User control code here, inside the loop
   while (1) {
@@ -260,11 +260,8 @@ void usercontrol(void) {
 
     }if(Controller1.ButtonUp.pressing()){
       Expansion = true;
-      Expansion2 = true;
-
     }else{
       Expansion = false;
-      Expansion2 = false;
     }if(Controller1.ButtonL1.pressing()){
       intake.setVelocity(100, percent);
       intake.spin(reverse);
