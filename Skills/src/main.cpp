@@ -34,6 +34,7 @@ motor LeftDrive1 = motor(PORT11, ratio6_1, false);
 motor LeftDrive2 = motor(PORT14, ratio6_1, false);
 motor LeftDrive3 = motor(PORT13, ratio6_1, false);
 motor_group LeftDrive = motor_group(LeftDrive1, LeftDrive2,LeftDrive3);
+motor_group Drive = motor_group(LeftDrive1, LeftDrive2, LeftDrive3, RightDrive1, RightDrive2, RightDrive3);
 digital_out Expansion = digital_out(Brain.ThreeWirePort.G);
 digital_out Indexer = digital_out(Brain.ThreeWirePort.H);
 digital_in Switch = digital_in(Brain.ThreeWirePort.E);
@@ -48,6 +49,8 @@ signature Vision5__BLUEBOX = signature(1, -3441, -2785, -3113, 8975, 10355, 9665
 signature Vision5__REDBOX = signature(3, 8099, 8893, 8496, -1505, -949, -1227, 2.5, 0);
 //call the vision sensor
 vision Vision5 = vision(PORT5, 50, Vision5__BLUEBOX, Vision5__REDBOX, Vision5__SIG_4, Vision5__SIG_5, Vision5__SIG_6, Vision5__SIG_7);
+
+inertial Inertia = inertial(PORT20);
 
 event checkRed = event();
 
@@ -100,20 +103,46 @@ void ToggleIntake(){
 //Turn right.  Don't input values over 180, instead just use a TurnLeft function
 //DO NOT USE THIS FOR DRIVER CONTROL.  This is built for auton
   //where the amount of revolutions is specified
-void TurnRight(float degrees){
-  LeftDrive.setVelocity(25, percent);
-  RightDrive.setVelocity(25, percent);
-  RightDrive.spinFor(forward, degrees/75, rotationUnits::rev, false);
-  LeftDrive.spinFor(reverse, degrees/75, rotationUnits::rev, true);
+void TurnRight(float amount){
+  float startingRotation = Inertia.rotation(degrees);
+  LeftDrive.setVelocity(20, percent);
+  RightDrive.setVelocity(20, percent);
+  LeftDrive.spin(reverse);
+  RightDrive.spin(forward);
+  waitUntil((Inertia.rotation(degrees) >= startingRotation + (amount - 5)));
+  RightDrive.stop(hold);
+  LeftDrive.stop(hold);
+}
+void TurnRightToPoint(float amount){
+  LeftDrive.setVelocity(20, percent);
+  RightDrive.setVelocity(20, percent);
+  LeftDrive.spin(reverse);
+  RightDrive.spin(forward);
+  waitUntil((Inertia.rotation(degrees) >= (amount - 5)));
+  RightDrive.stop(hold);
+  LeftDrive.stop(hold);
 }
 //Turn left.  Same deal as turn right
-void TurnLeft(float degrees){
-  LeftDrive.setVelocity(25, percent);
-  RightDrive.setVelocity(25, percent);
-  RightDrive.spinFor(reverse, degrees/75, rotationUnits::rev, false);
-  LeftDrive.spinFor(forward, degrees/75, rotationUnits::rev, true);
+void TurnLeft(float amount){
+  float startingRotation = Inertia.rotation(degrees);
+  LeftDrive.setVelocity(15, percent);
+  RightDrive.setVelocity(15, percent);
+  LeftDrive.spin(forward);
+  RightDrive.spin(reverse);
+  waitUntil((Inertia.rotation(degrees) <= startingRotation - (amount - 5)));
+  RightDrive.stop(hold);
+  LeftDrive.stop(hold);
 }
 
+void TurnLeftToPoint(float amount){
+  LeftDrive.setVelocity(15, percent);
+  RightDrive.setVelocity(15, percent);
+  LeftDrive.spin(forward);
+  RightDrive.spin(reverse);
+  waitUntil((Inertia.rotation(degrees) <= -(amount - 5)));
+  RightDrive.stop(hold);
+  LeftDrive.stop(hold);
+}
 competition Competition;
 
 // define your global instances of motors and other devices here
@@ -131,7 +160,6 @@ competition Competition;
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
-  Brain.Screen.print(color::cyan);
   //checkRed(hasRedCallback);
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
@@ -147,43 +175,49 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 void autonomous(void) {
-  motor_group Drive = motor_group(LeftDrive1, LeftDrive2, LeftDrive3, RightDrive1, RightDrive2, RightDrive3);
+  Brain.Screen.clearScreen(color::red);
+  Inertia.calibrate();
+  while (Inertia.isCalibrating()) {
+    wait(100, msec);
+  }
   Brain.Screen.clearScreen(color::green);
   LeftDrive.setVelocity(10, percent);
   RightDrive.setVelocity(10, percent);
-  Drive.setVelocity(25, percent);
+  Drive.setVelocity(20, percent);
+  intake.setVelocity(100, percent);
+  intake.spinFor(reverse, 2, rotationUnits::rev, false);
   Drive.spinFor(forward, 0.5, rotationUnits::rev, false);
   wait(200, msec);
-  intake.setVelocity(100, percent);
-  intake.spinFor(reverse, 0.75, rotationUnits::rev, true);
   Drive.stop();
-  Drive.setVelocity(50, percent);
   Drive.spinFor(reverse, 1.5, rotationUnits::rev, true);
-  Expansion = true;
-  // TurnLeft(140);
-  // intake.spin(reverse);
-  // Drive.spinFor(forward, 6, rotationUnits::rev, true);
-  // intake.stop();
-  // TurnRight(90);
-  // Flywheel.setVelocity(100, percent);
-  // Flywheel.spin(forward);
-  // //Drive.spinFor(reverse, 0.25, rotationUnits::rev, false);
-  // wait(2000, msec);
-  // Indexer = true;
-  // wait(250, msec);
-  // Indexer = false;
-  // Flywheel.stop();
-  // //Drive.spinFor(forward, 0.25, rotationUnits::rev, true);
-  // TurnLeft(85);
-  // intake.spin(reverse);
-  // Drive.spinFor(forward, 8.1, rotationUnits::rev, true);
-  // intake.stop();
-  // TurnRight(45);
-  // Drive.setVelocity(25, percent);
-  // Drive.spinFor(forward, 1, rotationUnits::rev, false);
-  // wait(500, msec);
-  // intake.setVelocity(100, percent);
-  // intake.spinFor(reverse, 0.75, rotationUnits::rev, true);
+  //TurnLeftToPoint(-135);
+  TurnLeft(135);
+  Drive.spinFor(forward, 6.5, rotationUnits::rev, true);
+  intake.stop();
+  TurnRight(95);
+  //TurnRightToPoint(-45);
+  Flywheel.setVelocity(100, percent);
+  Flywheel.spin(forward);
+  wait(2000, msec);
+  Indexer = true;
+  wait(250, msec);
+  Indexer = false;
+  Flywheel.stop();
+  wait(250, msec);
+  //Drive.spinFor(forward, 0.25, rotationUnits::rev, true);
+  TurnLeft(95);
+  //TurnLeftToPoint(-135);
+  intake.spin(forward);
+  Drive.spinFor(forward, 8, rotationUnits::rev, true);
+  intake.stop();
+  //TurnRight(55);
+  //TurnRightToPoint(-90);
+  Drive.setVelocity(10, percent);
+  intake.setVelocity(100, percent);
+  intake.spinFor(reverse, 2, rotationUnits::rev, false);
+  wait(50, msec);
+  //Drive.spinFor(forward, 1, rotationUnits::rev, true);
+  
 
   // ..........................................................................
   // Insert autonomous user code here.

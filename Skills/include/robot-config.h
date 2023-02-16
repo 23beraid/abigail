@@ -29,6 +29,7 @@ extern digital_out Expansion;
 extern digital_out Expansion2;
 extern vision DiscSensor;
 extern vision Vision5;
+extern inertial Inertia;
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
  * 
